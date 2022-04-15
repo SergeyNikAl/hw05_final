@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Об авторе проекта
+{% endblock %}
+
+{% block content %}
+  <div class="container py-5">
+    <h3>
+      Привет, я Сергей
+    </h3>
+    <div class="row">
+      <div class="col-md-3 mb-3 mt-1"> 
+        <div class="card"> 
+          <div class="card-body">
+            {% load static %}
+              <img class="card-img" style="border-radius: 120px;" size="269x188" crop="center" src="{% static "img/my_pic.jpg" %}" width="260" />
+          </div>                     
+        </div>                 
+      </div>
+        
+      <div class="col-md-9"> 
+        <div class="card-text">
+          <p>
+          Проект можно найти по ссылке:
+          <li class="list-group-item"> 
+            <div class="h6 text-muted">
+                <a class="p-2 text-dark" href="https://github.com/SergeyNikAl"> #Github </a>
+            </div> 
+          </li>
+          </p>
+        </div>                                     
+      </div>
+    </div>
+  </div>
+{% endblock %} 
