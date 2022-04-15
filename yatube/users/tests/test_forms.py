@@ -1,7 +1,7 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..forms import CreationForm, User
+from users.forms import CreationForm, User
 
 INDEX_URL = reverse('posts:index')
 SIGN_UP_URL = reverse('users:signup')
