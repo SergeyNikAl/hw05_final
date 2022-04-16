@@ -43,7 +43,7 @@
         <div class="container">
           <br>
           <a>
-            Колличество комментариев: {{ post.author.comments.count }}
+            Колличество комментариев: {{ post.comments.count }}
           </a>
           {% include 'posts/includes/add_comments.html'%}
           {% for comment in post.comments.all %}

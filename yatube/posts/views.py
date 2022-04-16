@@ -6,7 +6,6 @@ from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .models import Post, Group, User, Follow
-
 from yatube.settings import POSTS_ON_PAGES, CACHE_TIME
 
 
@@ -80,8 +79,8 @@ def post_edit(request, post_id):
         return redirect('posts:post_detail', post_id)
     form = PostForm(
         request.POST or None,
+        files=request.FILES or None,
         instance=post,
-        files=request.FILES or None
     )
     if form.is_valid():
         form.save()
@@ -95,16 +94,20 @@ def post_edit(request, post_id):
 @login_required
 def follow_index(request):
     return render(request, 'posts/follow.html', {
-        'page_obj': get_page(request, Post.objects.filter(
-            author__following__user=request.user))
+        'page_obj': get_page(
+            request, Post.objects.filter(
+                author__following__user=request.user
+            )
+        )
     })
 
 
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if not request.user.username == username:
-        Follow.objects.get_or_create(user=request.user, author=author)
+    if request.user.username == username:
+        return redirect('posts:profile', username=username)
+    Follow.objects.get_or_create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
 
 

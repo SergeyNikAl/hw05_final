@@ -1,12 +1,13 @@
 <div class="media mb-4">
   <div class="media-body">
   <h5 class="mt-0">
-    <a href="{% url 'posts:profile' comment.author.username %}">
+    <a href= "{% url 'posts:profile' comment.author.username %}" style="text-decoration: none;">
       {{ comment.author.username }}
     </a>
   </h5>
     <p>
      {{ comment.text | linebreaksbr }}
     </p>
+    <small class="text-muted">{{ comment.created }}</small>
   </div>
 </div>

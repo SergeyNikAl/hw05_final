@@ -46,9 +46,11 @@ PAGES_URL = [
     [INDEX_URL, POSTS_ON_PAGES],
     [PROFILE_URL, POSTS_ON_PAGES],
     [GROUP_POSTS_URL, POSTS_ON_PAGES],
+    [INDEX_FOLLOW_URL, POSTS_ON_PAGES],
     [INDEX_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
     [PROFILE_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
     [GROUP_POSTS_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
+    [INDEX_FOLLOW_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
 ]
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 SMALL_GIF = (
@@ -160,18 +162,29 @@ class TestViewClass(TestCase):
         )
 
     def test_paginator_on_pages(self):
-        """Тест колличества постов на страницах"""
+        """Тест количества постов на страницах"""
         Post.objects.all().delete()
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=SMALL_GIF,
+            content_type='image/gif'
+        )
         Post.objects.bulk_create(
-            Post(text=f'Пост {number}', author=self.user, group=self.group)
+            Post(
+                text=f'Пост {number}',
+                author=self.user,
+                group=self.group,
+                image=uploaded)
             for number in range(POSTS_ON_PAGES + POSTS_ON_PAGE_2)
         )
         cache.clear()
         for url, posts_count in PAGES_URL:
             with self.subTest(url=url):
-                response = self.client.get(url)
-                self.assertEqual(len(response.context['page_obj']),
-                                 posts_count)
+                response = self.another.get(url)
+                self.assertEqual(
+                    len(response.context['page_obj']),
+                    posts_count
+                )
 
     def test_post_following_author(self):
         """Новая запись пользователя не появляется в ленте тех,
@@ -181,11 +194,13 @@ class TestViewClass(TestCase):
 
     def test_follow(self):
         """Тест подписки на автора"""
-        self.assertTrue(
-            Follow.objects.filter(
-                user=self.authorized_user, author=self.user
-            ).exists()
+        Follow.objects.all().delete()
+        follow = self.another.get(FOLLOW_URL)
+        exist_follow = Follow.objects.filter(
+            user=self.authorized_user,
+            author=self.user
         )
+        self.assertTrue(exist_follow, follow)
 
     def test_unfollow(self):
         """Тест подписки на автора"""

@@ -42,25 +42,27 @@ class TestFormClass(TestCase):
         cls.group = Group.objects.create(
             title=GROUP_TEST_TITLE,
             slug=GROUP_TEST_SLUG,
-            description=DESCRIPTION
+            description=DESCRIPTION,
         )
         cls.group_1 = Group.objects.create(
             title=GROUP_2_TEST_TITLE,
             slug=GROUP_2_TEST_SLUG,
-            description=DESCRIPTION_2
+            description=DESCRIPTION_2,
         )
         cls.post = Post.objects.create(
             author=cls.user,
             text=POST_TEST_TEXT,
-            group=cls.group
+            group=cls.group,
         )
-        cls.POST_DETAIL_URL = reverse('posts:post_detail', kwargs={
-            'post_id': cls.post.id})
-        cls.POST_EDIT_URL = reverse('posts:post_edit', kwargs={
-            'post_id': cls.post.id})
-        cls.ADD_COMMENT_URL = reverse('posts:add_comment', kwargs={
-            'post_id': cls.post.id
-        })
+        cls.POST_DETAIL_URL = reverse(
+            'posts:post_detail', kwargs={'post_id': cls.post.id}
+        )
+        cls.POST_EDIT_URL = reverse(
+            'posts:post_edit', kwargs={'post_id': cls.post.id}
+        )
+        cls.ADD_COMMENT_URL = reverse(
+            'posts:add_comment', kwargs={'post_id': cls.post.id}
+        )
 
         cls.guest = Client()
         cls.author = Client()
@@ -118,7 +120,8 @@ class TestFormClass(TestCase):
             data=form_data,
             follow=True
         )
-        post = response.context.get('post')
+        post = Post.objects.get()
+        self.assertEqual(post.id, self.post.id)
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, self.post.author)
