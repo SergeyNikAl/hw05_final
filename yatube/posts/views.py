@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404, redirect, render
@@ -6,14 +7,15 @@ from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .models import Post, Group, User, Follow
-from yatube.settings import POSTS_ON_PAGES, CACHE_TIME
 
 
 def get_page(request, posts: QuerySet):
-    return Paginator(posts, POSTS_ON_PAGES).get_page(request.GET.get('page'))
+    return Paginator(posts, settings.POSTS_ON_PAGES).get_page(
+        request.GET.get('page')
+    )
 
 
-@cache_page(CACHE_TIME)
+@cache_page(settings.CACHE_TIME)
 def index(request):
     return render(request, 'posts/index.html', {
         'page_obj': get_page(request, Post.objects.all())

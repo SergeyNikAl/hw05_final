@@ -8,7 +8,6 @@ from django.conf import settings
 from django.urls import reverse
 
 from ..models import Group, Post, User, Follow
-from yatube.settings import POSTS_ON_PAGES
 
 TEST_USERNAME = 'user'
 TEST_AUTHOR_USERNAME = 'auth'
@@ -43,10 +42,10 @@ UNFOLLOW_URL = reverse(
     kwargs={'username': TEST_AUTHOR_USERNAME}
 )
 PAGES_URL = [
-    [INDEX_URL, POSTS_ON_PAGES],
-    [PROFILE_URL, POSTS_ON_PAGES],
-    [GROUP_POSTS_URL, POSTS_ON_PAGES],
-    [INDEX_FOLLOW_URL, POSTS_ON_PAGES],
+    [INDEX_URL, settings.POSTS_ON_PAGES],
+    [PROFILE_URL, settings.POSTS_ON_PAGES],
+    [GROUP_POSTS_URL, settings.POSTS_ON_PAGES],
+    [INDEX_FOLLOW_URL, settings.POSTS_ON_PAGES],
     [INDEX_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
     [PROFILE_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
     [GROUP_POSTS_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
@@ -175,7 +174,7 @@ class TestViewClass(TestCase):
                 author=self.user,
                 group=self.group,
                 image=uploaded)
-            for number in range(POSTS_ON_PAGES + POSTS_ON_PAGE_2)
+            for number in range(settings.POSTS_ON_PAGES + POSTS_ON_PAGE_2)
         )
         cache.clear()
         for url, posts_count in PAGES_URL:
