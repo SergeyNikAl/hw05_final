@@ -92,8 +92,8 @@ class TestPostView:
         assert comment_form_context is not None, (
             'Проверьте, что передали форму комментария в контекст страницы `/posts/<post_id>/` типа `CommentForm`'
         )
-        assert len(comment_form_context.fields) == 1, (
-            'Проверьте, что форма комментария в контексте страницы `/posts/<post_id>/` состоит из одного поля'
+        assert len(comment_form_context.fields) == 2, (
+            'Проверьте, что форма комментария в контексте страницы `/posts/<post_id>/` состоит из двух полей'
         )
         assert 'text' in comment_form_context.fields, (
             'Проверьте, что форма комментария в контексте страницы `/posts/<post_id>/` содержится поле `text`'
