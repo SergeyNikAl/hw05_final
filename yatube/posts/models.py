@@ -1,5 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 from core.models import CreatedModel
 
@@ -67,7 +68,7 @@ class Post(models.Model):
         return self.text[:15]
 
 
-class Comment(CreatedModel):
+class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -88,11 +89,16 @@ class Comment(CreatedModel):
         verbose_name='Дата публикации комментария',
         auto_now_add=True,
     )
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        ordering = ('-pub_date',)
+        ordering = ('-created',)
 
     def __str__(self):
         return self.text
@@ -112,6 +118,19 @@ class Follow(CreatedModel):
         verbose_name='Автор',
     )
 
+    def __str__(self):
+        return (f'Пользователь {self.user.username} подписан на {self.author.username}')
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError('нельзя подписаться на себя')
+
     class Meta:
         verbose_name = 'Подписчик'
         verbose_name_plural = 'Подписчики'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name='follow_user_author_constraint'
+            ),
+        )

@@ -1,8 +1,9 @@
 import shutil
 import tempfile
 
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, override_settings, TestCase
 from django.conf import settings
 from django.urls import reverse
 
@@ -33,6 +34,7 @@ SMALL_GIF = (
 )
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class TestFormClass(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -74,9 +76,34 @@ class TestFormClass(TestCase):
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        cache.clear()
+
+    def test_guest_create_post(self):
+        """
+        Проверка что анонимный пользователь
+        не может создать пост.
+        """
+        Post.objects.all().delete()
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=SMALL_GIF,
+            content_type='image/gif'
+        )
+        form_data = {
+            'text': 'new_text',
+            'group': self.group.id,
+            'image': uploaded,
+        }
+        response = self.guest.post(
+            POST_CREATE_URL,
+            data=form_data,
+            follow=True
+        )
+        self.assertEqual(Post.objects.count(), 0)
+        self.assertRedirects(response, f'{LOGIN_URL}?next={POST_CREATE_URL}')
 
     def test_create_post(self):
-        """Валидная форма создает запись в Post."""
+        """Валидная форма создает запись поста."""
         Post.objects.all().delete()
         uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -103,8 +130,37 @@ class TestFormClass(TestCase):
         )
         self.assertRedirects(response, PROFILE_URL)
 
+    def test_nonauthor_edit_post(self):
+        """Проверка что редактировать пост может только автор."""
+        test_users_urls_list = [
+            [self.guest, f'{LOGIN_URL}?next={self.POST_EDIT_URL}'],
+            [self.another, self.POST_DETAIL_URL],
+        ]
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=SMALL_GIF,
+            content_type='image/gif'
+        )
+        form_data = {
+            'text': 'Новый текст поста',
+            'group': self.group_1.id,
+            'image': uploaded,
+        }
+        for client, url in test_users_urls_list:
+            with self.subTest(user=client, url=url):
+                response = client.post(
+                    self.POST_EDIT_URL,
+                    data=form_data,
+                    follow=True
+                )
+                post = Post.objects.get(id=self.post.id)
+                self.assertEqual(self.post.text, post.text)
+                self.assertEqual(self.post.group, post.group)
+                self.assertEqual(self.post.author, post.author)
+                self.assertRedirects(response, url)
+
     def test_edit_post(self):
-        """Валидная форма редактирования записи Post."""
+        """Валидная форма редактирования записи поста."""
         uploaded = SimpleUploadedFile(
             name='small.gif',
             content=SMALL_GIF,
@@ -147,7 +203,7 @@ class TestFormClass(TestCase):
         )
 
     def test_create_comment(self):
-        """Валидная форма создает комментарий к Post."""
+        """Валидная форма создает комментарий к посту."""
         Comment.objects.all().delete()
         form_data = {
             'text': 'new_text',

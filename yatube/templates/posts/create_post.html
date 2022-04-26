@@ -12,7 +12,7 @@
       <div class="col-md-8 p-5">
         <div class="card">
           <div class="card-header">
-            {% if is_edit %}Редактировать пост{% else %}Новый пост{% endif %}
+            {% if post %}Редактировать пост{% else %}Новый пост{% endif %}
           </div>
           <div class="card-body">
             {% if form.errors %}
@@ -49,7 +49,7 @@
               {% endfor %}
               <div class="d-flex justify-content-end">
                 <button type="submit" class="btn btn-primary">
-                  {% if is_edit %}Сохранить{% else %}Добавить{% endif %}
+                  {% if post %}Сохранить{% else %}Добавить{% endif %}
                 </button>
               </div>
             </form>

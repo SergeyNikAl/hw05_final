@@ -4,7 +4,6 @@
   Профиль пользователя {{ author.username }}
 {% endblock %}
 
-{% load thumbnail %}
 {% block content %}
   <div class="container py-5">
     <div class="mb-5">
@@ -25,33 +24,7 @@
           >Подписаться</a>
         {% endif %}
       {% endif %}
-      {% for post in page_obj %}
-        <article>
-          <ul>
-            <li class="nav-item">
-              Автор: <a class="nav-item"
-                href="{% url 'posts:profile' author.username%}"
-              >
-                {{ post.author.username }}
-              </a>
-            </li>
-            <li>Дата публикации: {{ post.pub_date|date:"d E Y H:i:s" }}</li>
-          </ul>
-          {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-            <img class="card-img my-2" src="{{ im.url }}">
-          {% endthumbnail %}
-          <p>
-            {{ post.text|linebreaksbr }}
-          </p>
-          <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
-        </article>
-        {% if post.group %}
-          <a href="{% url 'posts:group_list' post.group.slug %}">#{{ post.group }}</a>
-        {% endif %}
-        {% if not forloop.last %}
-          <hr>
-        {% endif %}
-      {% endfor %}
+      {% include 'posts/includes/posts.html' %}
       {% include 'posts/includes/paginator.html' %}
     </div>
   </div>

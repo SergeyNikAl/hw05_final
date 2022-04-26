@@ -1,3 +1,4 @@
+{% load thumbnail %}
 <div class="media mb-4">
   <div class="media-body">
   <h5 class="mt-0">
@@ -8,6 +9,9 @@
     <p>
      {{ comment.text | linebreaksbr }}
     </p>
+    {% thumbnail comment.image "500x200" crop="center" upscale=True as im %}
+      <img class="card-img my-2" src="{{ im.url }}">
+    {% endthumbnail %}
     <small class="text-muted">{{ comment.created }}</small>
   </div>
 </div>

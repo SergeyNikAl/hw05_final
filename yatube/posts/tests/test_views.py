@@ -1,10 +1,10 @@
 import shutil
 import tempfile
 
-from django.test import Client, TestCase
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
+from django.test import Client, override_settings, TestCase
 from django.urls import reverse
 
 from ..models import Group, Post, User, Follow
@@ -41,16 +41,16 @@ UNFOLLOW_URL = reverse(
     'posts:profile_unfollow',
     kwargs={'username': TEST_AUTHOR_USERNAME}
 )
-PAGES_URL = [
-    [INDEX_URL, settings.POSTS_ON_PAGES],
-    [PROFILE_URL, settings.POSTS_ON_PAGES],
-    [GROUP_POSTS_URL, settings.POSTS_ON_PAGES],
-    [INDEX_FOLLOW_URL, settings.POSTS_ON_PAGES],
-    [INDEX_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
-    [PROFILE_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
-    [GROUP_POSTS_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
-    [INDEX_FOLLOW_URL + NEXT_PAGE, POSTS_ON_PAGE_2],
-]
+PAGES_URL = {
+    INDEX_URL: settings.POSTS_ON_PAGES,
+    PROFILE_URL: settings.POSTS_ON_PAGES,
+    GROUP_POSTS_URL: settings.POSTS_ON_PAGES,
+    INDEX_FOLLOW_URL: settings.POSTS_ON_PAGES,
+    INDEX_URL + NEXT_PAGE: POSTS_ON_PAGE_2,
+    PROFILE_URL + NEXT_PAGE: POSTS_ON_PAGE_2,
+    GROUP_POSTS_URL + NEXT_PAGE: POSTS_ON_PAGE_2,
+    INDEX_FOLLOW_URL + NEXT_PAGE: POSTS_ON_PAGE_2,
+}
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 SMALL_GIF = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -62,6 +62,7 @@ SMALL_GIF = (
 )
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class TestViewClass(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -107,12 +108,12 @@ class TestViewClass(TestCase):
         cls.another = Client()
         cls.another.force_login(cls.authorized_user)
 
-        cache.clear()
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        cache.clear()
 
     def test_pages_show_correct_context(self):
         """Страницы сформированы с корректным контекстом"""
@@ -153,12 +154,21 @@ class TestViewClass(TestCase):
         self.assertEqual(group.slug, self.group.slug)
         self.assertEqual(group.description, self.group.description)
 
-    def test_new_post_in_another_group(self):
-        """Наличие поста в другой группе"""
-        self.assertNotIn(
-            self.post,
-            self.another.get(GROUP_2_POSTS_URL).context['page_obj']
-        )
+    def test_new_post_in_another_group_and_nonfollowing(self):
+        """
+        Наличие поста в другой группе и новая запись пользователя
+        не появляется в ленте тех, кто не подписан на него.
+        """
+        urls_list = [
+            GROUP_2_POSTS_URL,
+            INDEX_FOLLOW_URL,
+        ]
+        for url in urls_list:
+            with self.subTest(url=url):
+                self.assertNotIn(
+                    self.post,
+                    self.author.get(url).context['page_obj']
+                )
 
     def test_paginator_on_pages(self):
         """Тест количества постов на страницах"""
@@ -173,23 +183,18 @@ class TestViewClass(TestCase):
                 text=f'Пост {number}',
                 author=self.user,
                 group=self.group,
-                image=uploaded)
+                image=uploaded
+            )
             for number in range(settings.POSTS_ON_PAGES + POSTS_ON_PAGE_2)
         )
         cache.clear()
-        for url, posts_count in PAGES_URL:
+        for url, posts_count in PAGES_URL.items():
             with self.subTest(url=url):
                 response = self.another.get(url)
                 self.assertEqual(
                     len(response.context['page_obj']),
                     posts_count
                 )
-
-    def test_post_following_author(self):
-        """Новая запись пользователя не появляется в ленте тех,
-        кто не подписан на него."""
-        response = self.another.get(INDEX_FOLLOW_URL)
-        self.assertTrue(len(response.context['page_obj']), 0)
 
     def test_follow(self):
         """Тест подписки на автора"""
@@ -202,7 +207,7 @@ class TestViewClass(TestCase):
         self.assertTrue(exist_follow, follow)
 
     def test_unfollow(self):
-        """Тест подписки на автора"""
+        """Тест отписки от автора"""
         self.another.get(UNFOLLOW_URL)
         self.assertFalse(
             Follow.objects.filter(

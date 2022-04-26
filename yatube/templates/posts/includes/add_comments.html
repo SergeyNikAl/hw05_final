@@ -1,13 +1,13 @@
 {% load user_filters %}
-
 {% if user.is_authenticated %}
   <div class="card my-4">
     <h5 class="card-header">Добавить комментарий:</h5>
     <div class="card-body">
-      <form method="post" action="{% url 'posts:add_comment' post.id %}">
+      <form method="post" action="{% url 'posts:add_comment' post.id %}" enctype="multipart/form-data">
         {% csrf_token %}      
-        <div class="form-group mb-2">
+        <div class="form-group mb-6">
           {{ form.text|addclass:"form-control" }}
+          {{ form.image }}
         </div>
         <button type="submit" class="btn btn-primary">Отправить</button>
       </form>
