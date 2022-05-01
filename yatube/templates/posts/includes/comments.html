@@ -9,9 +9,6 @@
     <p>
      {{ comment.text | linebreaksbr }}
     </p>
-    {% thumbnail comment.image "500x200" crop="center" upscale=True as im %}
-      <img class="card-img my-2" src="{{ im.url }}">
-    {% endthumbnail %}
     <small class="text-muted">{{ comment.created }}</small>
   </div>
 </div>

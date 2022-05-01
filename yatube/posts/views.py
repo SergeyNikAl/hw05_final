@@ -16,9 +16,7 @@ def get_page(request, posts: QuerySet):
 
 def index(request):
     return render(request, 'posts/index.html', {
-        'page_obj': get_page(
-            request, Post.objects.all().select_related('author', 'group')
-        )
+        'page_obj': get_page(request, Post.objects.all())
     })
 
 
@@ -26,22 +24,16 @@ def group_posts_list(request, slug):
     group = get_object_or_404(Group, slug=slug)
     return render(request, 'posts/group_list.html', {
         'group': group,
-        'page_obj': get_page(
-            request, group.posts.all().select_related('author')
-        ),
+        'page_obj': get_page(request, group.posts.all()),
     })
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    follow = (
-        request.user.is_authenticated
-        and request.user.username != username
-        and Follow.objects.filter(
-            author=author,
-            user=request.user
-        ).exists()
-    )
+    follow = (request.user.is_authenticated
+              and request.user.username != username
+              and Follow.objects.filter(author=author,
+                                        user=request.user).exists())
     return render(request, 'posts/profile.html', {
         'author': author,
         'page_obj': get_page(request, author.posts.all()),
@@ -54,6 +46,21 @@ def post_detail(request, post_id):
         'post': get_object_or_404(Post, id=post_id),
         'form': CommentForm(),
     })
+
+
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    form = CommentForm(
+        request.POST or None,
+        files=request.FILES or None
+    )
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+    return redirect('posts:post_detail', post_id=post_id)
 
 
 @login_required
@@ -89,21 +96,6 @@ def post_edit(request, post_id):
 
 
 @login_required
-def add_comment(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    form = CommentForm(
-        request.POST or None,
-        files=request.FILES or None
-    )
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
-    return redirect('posts:post_detail', post_id=post_id)
-
-
-@login_required
 def follow_index(request):
     return render(request, 'posts/follow.html', {
         'page_obj': get_page(
@@ -117,8 +109,9 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user.username != username:
-        Follow.objects.get_or_create(user=request.user, author=author)
+    if request.user.username == username:
+        return redirect('posts:profile', username=username)
+    Follow.objects.get_or_create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
 
 
@@ -133,7 +126,7 @@ def profile_unfollow(request, username):
 @login_required
 def post_delete(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    if request.user != post.author:
+    if request.user != post.author and request.method != 'POST':
         return redirect('posts:post_detail', post_id)
     post.delete()
     return redirect('posts:profile', post.author)

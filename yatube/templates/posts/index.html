@@ -9,7 +9,10 @@
   <div class="container py-5">
     {% include 'posts/includes/switcher.html' with index=True %}
     {% cache 20 index_page with page_obj %}
-      {% include 'posts/includes/posts.html' %}
+      {% for post in page_obj %}
+        {% include 'posts/includes/posts.html'%}
+        {% if not forloop.last %} <hr> {% endif %}
+      {% endfor %}
     {% endcache %} 
     {% include 'posts/includes/paginator.html' %}
   </div>

@@ -1,6 +1,6 @@
-from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import models
 
 from core.models import CreatedModel
 
@@ -89,11 +89,6 @@ class Comment(models.Model):
         verbose_name='Дата публикации комментария',
         auto_now_add=True,
     )
-    image = models.ImageField(
-        'Картинка',
-        upload_to='posts/',
-        blank=True
-    )
 
     class Meta:
         verbose_name = 'Комментарий'
@@ -119,7 +114,9 @@ class Follow(CreatedModel):
     )
 
     def __str__(self):
-        return (f'Пользователь {self.user.username} подписан на {self.author.username}')
+        return (
+            f'Пользователь {self.user} подписан на {self.author}'
+        )
 
     def clean(self):
         if self.user == self.author:

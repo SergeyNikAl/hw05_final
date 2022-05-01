@@ -24,7 +24,10 @@
           >Подписаться</a>
         {% endif %}
       {% endif %}
-      {% include 'posts/includes/posts.html' %}
+      {% for post in page_obj %}
+        {% include 'posts/includes/posts.html' with non_author=True%}
+        {% if not forloop.last %} <hr> {% endif %}
+      {% endfor %}
       {% include 'posts/includes/paginator.html' %}
     </div>
   </div>

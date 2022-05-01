@@ -1,9 +1,9 @@
 import shutil
 import tempfile
+from PIL import Image, ImageChops
 
-from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, override_settings, TestCase
+from django.test import Client, TestCase
 from django.conf import settings
 from django.urls import reverse
 
@@ -34,7 +34,6 @@ SMALL_GIF = (
 )
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class TestFormClass(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -76,7 +75,6 @@ class TestFormClass(TestCase):
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
-        cache.clear()
 
     def test_guest_create_post(self):
         """
@@ -103,7 +101,7 @@ class TestFormClass(TestCase):
         self.assertRedirects(response, f'{LOGIN_URL}?next={POST_CREATE_URL}')
 
     def test_create_post(self):
-        """Валидная форма создает запись поста."""
+        """Валидная форма создает запись в Post."""
         Post.objects.all().delete()
         uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -160,7 +158,7 @@ class TestFormClass(TestCase):
                 self.assertRedirects(response, url)
 
     def test_edit_post(self):
-        """Валидная форма редактирования записи поста."""
+        """Валидная форма редактирования записи Post."""
         uploaded = SimpleUploadedFile(
             name='small.gif',
             content=SMALL_GIF,
@@ -181,8 +179,11 @@ class TestFormClass(TestCase):
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, self.post.author)
-        self.assertTrue(
-            str(form_data['image']).split('.')[0] in str(post.image.file)
+        self.assertIsNone(
+            ImageChops.difference(
+                Image.open(post.image),
+                Image.open(uploaded)
+            ).getbbox()
         )
         self.assertRedirects(response, self.POST_DETAIL_URL)
 
@@ -203,7 +204,7 @@ class TestFormClass(TestCase):
         )
 
     def test_create_comment(self):
-        """Валидная форма создает комментарий к посту."""
+        """Валидная форма создает комментарий к Post."""
         Comment.objects.all().delete()
         form_data = {
             'text': 'new_text',
