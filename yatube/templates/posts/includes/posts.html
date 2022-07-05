@@ -25,6 +25,8 @@
   <a class="btn btn-primary" href="{% url 'posts:post_detail' post.pk %}">Подробная информация</a><br>
 {% endif %} 
 {% if user == post.author %}
-  <a class="btn btn-primary" href="{% url 'posts:post_delete' post.id %}"
-  >Удалить пост</a><br>
+  <form action="{% url "posts:post_delete" post.id %}" method="post">
+    {% csrf_token %}
+    <button class="btn btn-primary" onclick="return confirm('Вы уверен, что хотите удалить пост?');">Удалить пост</button>
+  </form>
 {% endif %}
